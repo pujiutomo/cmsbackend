@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/pujiutomo/cmsbackend/database"
 	"github.com/pujiutomo/cmsbackend/models"
+	"github.com/pujiutomo/cmsbackend/util"
 )
 
 func validateEmail(email string) bool {
@@ -61,4 +64,58 @@ func Register(c *fiber.Ctx) error {
 		"user":    user,
 		"message": "Account created successfully",
 	})
+}
+
+func Login(c *fiber.Ctx) error {
+	var data map[string]string
+
+	if err := c.BodyParser(&data); err != nil {
+		fmt.Println("Unable parse body")
+	}
+	var user models.User
+	database.DB.Where("email=?", data["email"]).First(&user)
+	if user.Id == 0 {
+		c.Status(404)
+		return c.JSON(fiber.Map{
+			"message": "Email address doesn't exist",
+		})
+	}
+	if err := user.ComparePassword(data["password"]); err != nil {
+		c.Status(400)
+		return c.JSON(fiber.Map{
+			"message": "Incorrect Password",
+		})
+	}
+	var domain []models.Domain
+	idDomain := strings.Split(user.DomainName, ",")
+	database.DB.Select([]string{"id", "name", "logo", "modul", "meta_title"}).Where("id IN (?)", idDomain).Find(&domain)
+
+	token, err := util.GenerateJwt(strconv.Itoa(int(user.Id)))
+	if err != nil {
+		c.Status(fiber.StatusInternalServerError)
+		return c.JSON(fiber.Map{
+			"message": "Error nang Kene " + token,
+		})
+	}
+	cookie := fiber.Cookie{
+		Name:     "jwt",
+		Value:    token,
+		Expires:  time.Now().Add(24 * time.Hour),
+		HTTPOnly: true,
+	}
+	c.Cookie(&cookie)
+	return c.JSON(fiber.Map{
+		"message": "You have successfully Login",
+		"user": fiber.Map{
+			"id":         user.Id,
+			"first_name": user.FirstName,
+			"last_name":  user.LastName,
+			"phone":      user.Phone,
+			"domains":    domain,
+		},
+	})
+
+	//type Claims struct{
+
+	//}
 }

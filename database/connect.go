@@ -32,5 +32,6 @@ func Connnect() {
 	DB = database
 	database.AutoMigrate(
 		&models.User{},
+		&models.Domain{},
 	)
 }
