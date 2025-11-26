@@ -9,4 +9,5 @@ type Domain struct {
 	MetaKeyword string `json:"meta_keyword"`
 	MetaIco     string `json:"meta_ico"`
 	Modul       string `json:"modul"`
+	Status      string `json:"status"`
 }

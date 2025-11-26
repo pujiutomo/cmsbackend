@@ -9,8 +9,9 @@ type User struct {
 	Email       string `json:"email"`
 	Password    []byte `json:"-"`
 	Phone       string `json:"phone"`
-	DomainName  string `json:"domain_name"`
+	DomainsId   string `json:"domains_id"`
 	AccessRight string `json:"access_right"`
+	Su          string `json:"su"`
 }
 
 func (user *User) SetPassword(password string) {
